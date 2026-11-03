@@ -20,14 +20,14 @@
   d.classList.add('anim-ready','has-loader','is-loading');
   try{if(sessionStorage.getItem('tb-intro')==='1')d.classList.add('ld-quick');}catch(e){}
   if('scrollRestoration' in history)history.scrollRestoration='manual';
-  /* animation library: loaded async so it never blocks the page */
-  window.__tbGsap=new Promise(function(res){
-    var s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';s.async=true;
-    s.onload=function(){res(!!window.gsap)};s.onerror=function(){res(false)};
-    setTimeout(function(){res(!!window.gsap)},5000);
-    document.head.appendChild(s);
-  });
+  /* animation libraries: loaded async so they never block the page */
+  function load(src){return new Promise(function(res){var s=document.createElement('script');s.src=src;s.async=true;s.onload=function(){res(true)};s.onerror=function(){res(false)};document.head.appendChild(s);});}
+  var cdn='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/';
+  window.__tbGsap=Promise.race([
+    load(cdn+'gsap.min.js').then(function(ok){return ok&&window.gsap?load(cdn+'ScrollTrigger.min.js').then(function(){return true;}):false;}),
+    new Promise(function(r){setTimeout(function(){r(!!window.gsap)},5000);})
+  ]);
+  window.__tbLenis=matchMedia('(pointer: fine)').matches?load('https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js'):Promise.resolve(false);
   /* failsafe: if anything breaks, never leave the visitor behind a loader */
   window.__tbFailsafe=setTimeout(function(){
     d.classList.remove('is-loading','has-loader','anim-ready');
@@ -111,7 +111,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 .ico *{stroke-dasharray:1;stroke-dashoffset:0}
 
 /* ---------- nav ---------- */
-.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:var(--nav-bg);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid transparent;transition:border-color .3s,background-color .5s}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:var(--nav-bg);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);border-bottom:1px solid transparent;transition:border-color .3s,background-color .5s}
 .nav.scrolled{border-bottom-color:var(--line)}
 .nav-in{display:flex;align-items:center;gap:12px;height:64px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:1.05rem;letter-spacing:-.01em;min-width:0}
@@ -133,7 +133,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 .nav.open .menu-btn span:nth-child(2){opacity:0}
 .nav.open .menu-btn span:nth-child(3){transform:translateY(-5.8px) rotate(-45deg)}
 .progress{position:absolute;left:0;bottom:-1px;height:2px;width:100%;background:linear-gradient(90deg,var(--accent),var(--signal));transform-origin:0 50%;transform:scaleX(var(--p,0))}
-@media (max-width:1079px){
+@media (max-width:1199px){
   .nav-links{position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;margin:0;padding:8px max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px));background:var(--bg);border-bottom:1px solid var(--line);box-shadow:var(--shadow);opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .3s,transform .4s var(--ease),visibility 0s .4s}
   .nav.open .nav-links{opacity:1;visibility:visible;transform:none;transition:opacity .3s,transform .4s var(--ease),visibility 0s}
   .nav-links a{padding:12px 8px;font-size:1.05rem;border-radius:var(--r-sm)}
@@ -562,6 +562,105 @@ a.c-v:hover{background-size:100% 1.5px}
 @media (max-width:860px){.contact-in{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:480px){.c-card{padding:6px 18px}.c-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px}.c-k{grid-column:1/-1}}
 
+/* ---------- academic world ---------- */
+.aw-tabs{position:relative;display:inline-flex;gap:4px;padding:6px;margin-bottom:20px;border-radius:999px;background:var(--surface);border:1px solid var(--line);max-width:100%}
+.aw-tab{position:relative;z-index:1;display:grid;gap:3px;padding:10px 22px;border:0;border-radius:999px;background:none;color:var(--ink-soft);font:700 1rem/1.15 var(--font-display);letter-spacing:-.01em;text-align:left;white-space:nowrap;cursor:pointer;transition:color .35s}
+.aw-tab .mono{font-size:.6rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+.aw-tab:hover{color:var(--ink)}
+.aw-tab[aria-selected="true"]{color:var(--accent-ink)}
+.aw-ind{position:absolute;z-index:0;top:6px;bottom:6px;left:0;width:0;border-radius:999px;background:var(--accent);box-shadow:0 8px 20px -10px var(--accent);transition:transform .6s var(--ease),width .6s var(--ease)}
+.aw-stage{position:relative;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.aw-panel{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.aw-vis{display:grid;gap:18px;align-content:start;padding:28px;border-right:1px solid var(--line);background-image:linear-gradient(var(--accent-soft) 1px,transparent 1px),linear-gradient(90deg,var(--accent-soft) 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px}
+.aw-copy{display:grid;gap:14px;align-content:start;padding:32px}
+.aw-copy h3{font-size:clamp(1.4rem,1.2rem + .8vw,1.8rem);font-weight:700;line-height:1.15}
+.aw-copy p{color:var(--ink-soft)}
+.aw-read{justify-self:start;padding:9px 14px;border-radius:10px;background:var(--accent-soft);color:var(--accent)!important;font-family:var(--font-mono);font-size:.8rem;letter-spacing:.02em;font-variant-numeric:tabular-nums;transition:background-color .35s,color .35s}
+.aw-read.hot{background:var(--signal-soft);color:var(--signal)!important}
+.aw-link{display:grid;gap:6px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink)!important;font-weight:600;font-size:.96rem;line-height:1.45}
+.aw-link .mono{font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--signal)}
+.aw-note{font-size:.8rem;font-style:italic}
+.aw-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.aw-ctrl label{display:flex;gap:8px;align-items:baseline;font-weight:600;font-size:.92rem}
+.aw-ctrl output{font-family:var(--font-mono);color:var(--accent);font-variant-numeric:tabular-nums;min-width:4ch}
+.rng{flex:1 1 180px;min-width:0;height:28px;margin:0;accent-color:var(--accent);cursor:pointer}
+.btn.sm{min-height:42px;padding:0 18px;font-size:.9rem}
+.aw-svg{display:block;width:100%;height:auto;overflow:visible;touch-action:none}
+.svg-lab{font:500 11px var(--font-mono);letter-spacing:.06em;fill:var(--ink-soft)}
+.svg-lab.hot{fill:var(--signal)}
+.np-grid-l{stroke:var(--line);stroke-width:1}
+.np-axis{stroke:var(--line-strong);stroke-width:1.2}
+.np-thr{stroke:var(--signal);stroke-width:1.3;stroke-dasharray:4 5}
+.np-stim{stroke:var(--accent);stroke-width:2;stroke-linecap:round;transition:stroke .3s}
+.stim .np-stim{stroke:var(--signal)}
+.np-trace{fill:none;stroke:var(--accent);stroke-width:2.8;stroke-linejoin:round;stroke-linecap:round;transition:stroke .4s}
+.np-trace.hot{stroke:var(--signal)}
+.np-ghost{fill:none;stroke:var(--line-strong);stroke-width:1.5;stroke-dasharray:2 4}
+.np-dot{fill:var(--surface);stroke:var(--accent);stroke-width:2.5}
+.np-trace.hot~.np-dot{stroke:var(--signal)}
+.gait-cv{display:block;width:100%;height:300px;border-radius:var(--r-sm)}
+.gait-bar{display:grid;gap:6px}
+.gait-ss{display:flex;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.gait-ss span{padding-top:5px}
+.gait-ss span:first-child{flex:0 0 62%;border-top:2px solid var(--accent)}
+.gait-ss span:last-child{flex:1;border-top:2px solid var(--signal);padding-left:6px}
+.gait-phases{position:relative;display:flex;gap:3px}
+.gait-phases button{flex:var(--w) 1 0;min-width:0;height:34px;padding:0 2px;border:0;border-radius:8px;background:var(--surface-2);color:var(--ink-soft);font:500 .66rem/1 var(--font-mono);letter-spacing:.04em;overflow:hidden;cursor:pointer;transition:background-color .3s,color .3s}
+.gait-phases button:hover{color:var(--ink)}
+.gait-phases button.on{background:var(--accent);color:var(--accent-ink)}
+.gait-phases button.sw.on{background:var(--signal);color:var(--surface)}
+.gait-head{position:absolute;z-index:2;top:-5px;bottom:-5px;left:0;width:2px;margin-left:-1px;border-radius:2px;background:var(--ink);pointer-events:none;transform:translateX(var(--gx,0px))}
+.gait-ang{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.gait-ang div{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.gait-ang dt{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.gait-ang dd{margin:2px 0 0;font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kn-couch{fill:var(--surface-2);stroke:var(--line-strong)}
+.kn-couch-leg{stroke:var(--line-strong);stroke-width:3;stroke-linecap:round}
+.kn-far,.kn-trunk{fill:none;stroke:var(--line-strong);stroke-width:14;stroke-linecap:round;stroke-linejoin:round}
+.kn-trunk{stroke-width:26}
+.kn-head{fill:var(--surface);stroke:var(--line-strong);stroke-width:3}
+.kn-ref{stroke:var(--line-strong);stroke-width:1.3;stroke-dasharray:4 5}
+.kn-arc{fill:var(--signal-soft);stroke:var(--signal);stroke-width:1.5}
+.kn-deg{font-size:13px;font-weight:600;fill:var(--signal)}
+.kn-thigh,.kn-shank{stroke:var(--ink);stroke-width:14;stroke-linecap:round}
+.kn-foot{stroke:var(--ink);stroke-width:9;stroke-linecap:round}
+.kn-ham-band{fill:none;stroke-width:12;stroke-linecap:round;opacity:.25}
+.kn-ham{fill:none;stroke-width:3.5;stroke-linecap:round}
+.kn-joint{fill:var(--surface);stroke:var(--ink);stroke-width:3}
+.kn-handle{fill:var(--accent);stroke:var(--surface);stroke-width:4;cursor:grab;filter:drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+.kn-svg.drag .kn-handle{cursor:grabbing}
+.seg{display:inline-flex;padding:4px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.seg button{padding:8px 14px;border:0;border-radius:999px;background:none;color:var(--ink-soft);font:600 .86rem/1 var(--font-body);cursor:pointer;transition:background-color .3s,color .3s}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+@media (max-width:960px){.aw-panel{grid-template-columns:minmax(0,1fr)}.aw-vis{border-right:0;border-bottom:1px solid var(--line)}}
+@media (max-width:640px){
+  .aw-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;border-radius:16px}
+  .aw-tab{padding:10px 6px;border-radius:12px;text-align:center;white-space:normal;font-size:.84rem}
+  .aw-tab .mono{display:none}
+  .aw-ind{border-radius:12px}
+  .aw-vis,.aw-copy{padding:18px}
+  .gait-cv{height:230px}
+  .gait-ang{gap:6px}
+  .gait-ang div{padding:8px 9px}
+  .gait-ang dd{font-size:.76rem;white-space:normal;line-height:1.25}
+}
+
+/* ---------- motion extras ---------- */
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .06em .12em 0;margin:0 -.06em -.12em 0}
+.w>span{display:inline-block}
+@keyframes wordUp{from{transform:translateY(112%)}}
+.anim-ready .reveal.in .w>span{animation:wordUp 1s var(--ease) backwards;animation-delay:calc(.06s + var(--wi) * 55ms)}
+.anim-ready .sec-head.reveal.in{animation-name:fadeIn}
+.edu::after{content:"";position:absolute;z-index:0;left:9px;top:14px;bottom:14px;width:2px;border-radius:2px;background:var(--accent);transform-origin:top;transform:scaleY(var(--edu-p,1))}
+.edu li::before,.edu li.now::after{z-index:1}
+@media (max-width:720px){.edu::after{left:6px}}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+.cursor{position:fixed;left:0;top:0;z-index:90;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent);pointer-events:none;opacity:0;transition:opacity .3s,background-color .3s,border-color .3s}
+.cursor.on{opacity:.75}
+.cursor.hot{background:var(--accent-soft);border-color:var(--signal)}
+
 /* ---------- footer, spine, toast ---------- */
 .foot-bar{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
 .foot-in{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;color:var(--ink-soft);font-size:.92rem}
@@ -632,6 +731,7 @@ a.c-v:hover{background-size:100% 1.5px}
       <li><a href="#about">About</a></li>
       <li><a href="#education">Education</a></li>
       <li><a href="#experience">Experience</a></li>
+      <li><a href="#academics">Academics</a></li>
       <li><a href="#research">Research</a></li>
       <li><a href="#achievements">Achievements</a></li>
       <li><a href="#skills">Skills</a></li>
@@ -785,6 +885,115 @@ a.c-v:hover{background-size:100% 1.5px}
           <li class="dept" style="--i:7"><span class="ic"><svg class="ico draw" style="--i:7" viewBox="0 0 24 24" aria-hidden="true"><rect pathLength="1" x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path pathLength="1" d="M12 8v8M8 12h8"/></svg></span>General Physiotherapy</li>
         </ul>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ACADEMIC WORLD ============ -->
+<section class="sec alt aw" id="academics">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">My academic world</p><h2>The science behind my practice, made interactive.</h2><p class="sub">Three ideas from neurology, gait training and musculoskeletal assessment. Adjust, scrub or drag each one.</p></div>
+    <div class="aw-tabs reveal" role="tablist" aria-label="Interactive concepts">
+      <span class="aw-ind" aria-hidden="true"></span>
+      <button class="aw-tab" role="tab" type="button" id="tab-nerve" aria-controls="panel-nerve" aria-selected="true"><span class="mono">Neurology</span>Nerve signal</button>
+      <button class="aw-tab" role="tab" type="button" id="tab-gait" aria-controls="panel-gait" aria-selected="false" tabindex="-1"><span class="mono">Rehabilitation</span>Gait cycle</button>
+      <button class="aw-tab" role="tab" type="button" id="tab-knee" aria-controls="panel-knee" aria-selected="false" tabindex="-1"><span class="mono">Assessment</span>Hamstring length</button>
+    </div>
+    <div class="aw-stage reveal" style="--d:1">
+
+      <div class="aw-panel" role="tabpanel" id="panel-nerve" aria-labelledby="tab-nerve">
+        <div class="aw-vis">
+          <svg class="aw-svg np-svg" id="npSvg" viewBox="0 0 560 300" role="img" aria-label="Graph of membrane potential in millivolts against time after a stimulus">
+            <g id="npGrid"></g>
+            <path class="np-ghost" id="npGhost"/>
+            <path class="np-trace" id="npTrace"/>
+            <circle class="np-dot" id="npDot" r="5"/>
+          </svg>
+          <div class="aw-ctrl">
+            <label for="npStim">Stimulus strength <output id="npOut" for="npStim">35%</output></label>
+            <input class="rng" type="range" id="npStim" min="0" max="100" value="35">
+            <button class="btn primary sm magnetic" id="npFire" type="button">Stimulate</button>
+          </div>
+        </div>
+        <div class="aw-copy">
+          <p class="aw-read" id="npRead" aria-live="polite">Peak −60 mV · below threshold, no action potential</p>
+          <h3>All-or-none</h3>
+          <p>A neuron fires only when its membrane potential reaches threshold, around −55 mV. Below it, the change fades away. Above it, the response is always the same full spike, however strong the stimulus.</p>
+          <p>This is how nerves carry movement commands to muscles, and it is the principle behind electrical nerve stimulation such as TENS.</p>
+          <p class="aw-link"><span class="mono">In my work</span>MPT Neurology at Yenepoya · neurological rotation · electrotherapy</p>
+          <p class="aw-note">Schematic values for a typical neuron, not to scale.</p>
+        </div>
+      </div>
+
+      <div class="aw-panel" role="tabpanel" id="panel-gait" aria-labelledby="tab-gait" hidden>
+        <div class="aw-vis">
+          <canvas class="gait-cv" id="gaitCv" role="img" aria-label="Animated side view of a person walking, showing hip, knee and ankle movement through the gait cycle"></canvas>
+          <div class="gait-bar">
+            <div class="gait-ss" aria-hidden="true"><span>Stance · 62%</span><span>Swing · 38%</span></div>
+            <div class="gait-phases" id="gaitPhases"><i class="gait-head" aria-hidden="true"></i></div>
+          </div>
+          <div class="aw-ctrl">
+            <button class="btn ghost sm" id="gaitPlay" type="button" aria-pressed="true">Pause</button>
+            <label class="sr-only" for="gaitScrub">Position in the gait cycle</label>
+            <input class="rng" type="range" id="gaitScrub" min="0" max="99.5" step="0.5" value="0">
+          </div>
+        </div>
+        <div class="aw-copy">
+          <p class="aw-read" id="gaitRead" aria-live="off">Initial contact · 0% of the cycle</p>
+          <dl class="gait-ang">
+            <div><dt>Hip</dt><dd id="gHip">30° flexion</dd></div>
+            <div><dt>Knee</dt><dd id="gKnee">5° flexion</dd></div>
+            <div><dt>Ankle</dt><dd id="gAnkle">Neutral</dd></div>
+          </dl>
+          <h3>The gait cycle</h3>
+          <p>One cycle runs from a heel strike to the next heel strike of the same foot. About 60% of it is stance, when the foot is on the ground, and about 40% is swing.</p>
+          <p>Gait training looks at how the hip, knee and ankle move through each phase, and where a patient's pattern differs from it.</p>
+          <p class="aw-link"><span class="mono">In my work</span>Gait &amp; balance training · neurological, orthopaedic and geriatric rotations</p>
+          <p class="aw-note">Typical joint angles for healthy adult walking, simplified. Readings are for the near (right) leg.</p>
+        </div>
+      </div>
+
+      <div class="aw-panel" role="tabpanel" id="panel-knee" aria-labelledby="tab-knee" hidden>
+        <div class="aw-vis">
+          <svg class="aw-svg kn-svg" id="knSvg" viewBox="0 0 560 320" role="img" aria-label="A person lying on their back with the hip bent to 90 degrees while the knee straightens">
+            <rect class="kn-couch" x="30" y="284" width="500" height="12" rx="6"/>
+            <path class="kn-couch-leg" d="M76 296v22M484 296v22"/>
+            <path class="kn-far" d="M246 272 L74 276 M74 276 L66 256"/>
+            <path class="kn-trunk" d="M262 270 L446 264"/>
+            <circle class="kn-head" cx="472" cy="258" r="20"/>
+            <line class="kn-ref" x1="250" y1="140" x2="250" y2="16"/>
+            <text class="svg-lab" x="262" y="72">Full extension</text>
+            <path class="kn-arc" id="knArc"/>
+            <text class="svg-lab kn-deg" id="knDeg"></text>
+            <path class="kn-ham-band" id="knHamBand"/>
+            <path class="kn-ham" id="knHam"/>
+            <path class="kn-thigh" d="M250 270 L250 140"/>
+            <line class="kn-shank" id="knShank"/>
+            <line class="kn-foot" id="knFoot"/>
+            <circle class="kn-joint" cx="250" cy="270" r="7"/>
+            <circle class="kn-joint" cx="250" cy="140" r="7"/>
+            <circle class="kn-handle" id="knHandle" r="14"/>
+            <text class="svg-lab" x="150" y="318">Hip held at 90°</text>
+          </svg>
+          <div class="aw-ctrl">
+            <div class="seg" role="group" aria-label="Hamstring flexibility">
+              <button type="button" id="knFlex" aria-pressed="true">Flexible</button>
+              <button type="button" id="knTight" aria-pressed="false">Tight</button>
+            </div>
+            <label class="sr-only" for="knRange">Straighten the knee</label>
+            <input class="rng" type="range" id="knRange" min="0" max="100" value="0">
+          </div>
+        </div>
+        <div class="aw-copy">
+          <p class="aw-read" id="knRead" aria-live="polite">Knee bent to 90°</p>
+          <h3>Measuring hamstring length</h3>
+          <p>The hamstrings run from the pelvis to just below the knee, so they cross both joints. With the hip held at 90°, straightening the knee stretches them.</p>
+          <p>How close the knee gets to straight is a common clinical measure of hamstring tightness, called the active knee extension test. Drag the foot or use the slider.</p>
+          <p class="aw-link"><span class="mono">In my work</span>My published study compared the suboccipital muscle inhibition technique and the Bowen technique on hamstring tightness among college students.</p>
+          <p class="aw-note">Illustrative angles.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -950,7 +1159,7 @@ a.c-v:hover{background-size:100% 1.5px}
   function readColors() {
     const cs = getComputedStyle(d);
     const g = (n) => cs.getPropertyValue(n).trim();
-    C = { accent: g('--accent'), signal: g('--signal'), ink: g('--ink-soft'), line: g('--line-strong'), bg: g('--bg') };
+    C = { accent: g('--accent'), signal: g('--signal'), ink: g('--ink-soft'), inkMain: g('--ink'), line: g('--line-strong'), lineSoft: g('--line'), bg: g('--bg'), surface: g('--surface') };
   }
   readColors();
   const redrawers = [];
@@ -983,9 +1192,28 @@ a.c-v:hover{background-size:100% 1.5px}
   }
   const reveals = $$('.reveal');
   let revealsStarted = false;
+  // split section headings into words for a line-by-line rise
+  function splitWords(root) {
+    let wi = 0;
+    const walk = (el) => Array.from(el.childNodes).forEach((n) => {
+      if (n.nodeType === 1) return walk(n);
+      if (n.nodeType !== 3 || !n.textContent.trim()) return;
+      const frag = document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+        const w = document.createElement('span'), inner = document.createElement('span');
+        w.className = 'w'; inner.textContent = part; inner.style.setProperty('--wi', wi++);
+        w.appendChild(inner); frag.appendChild(w);
+      });
+      n.replaceWith(frag);
+    });
+    walk(root);
+  }
   function startReveals() {
     if (revealsStarted) return; revealsStarted = true;
     if (!animated || !d.classList.contains('anim-ready')) { reveals.forEach((el) => el.classList.add('in')); return; }
+    $$('.sec-head h2, .contact h2').forEach(splitWords);
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
@@ -1018,7 +1246,7 @@ a.c-v:hover{background-size:100% 1.5px}
   addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
   const links = $$('.nav-links a');
   links.forEach((a) => a.addEventListener('click', closeMenu));
-  const linkFor = { about: 'about', education: 'education', experience: 'experience', research: 'research', achievements: 'achievements', workshops: 'achievements', skills: 'skills', contact: 'contact' };
+  const linkFor = { about: 'about', education: 'education', experience: 'experience', academics: 'academics', research: 'research', achievements: 'achievements', workshops: 'achievements', skills: 'skills', contact: 'contact' };
   const spy = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
@@ -1055,7 +1283,7 @@ a.c-v:hover{background-size:100% 1.5px}
   spine.addEventListener('click', (e) => {
     const v = e.target.closest('.vb'); if (!v) return;
     const max = d.scrollHeight - innerHeight;
-    scrollTo({ top: max * (+v.dataset.i) / (levels.length - 1), behavior: RM.matches ? 'auto' : 'smooth' });
+    goTo(max * (+v.dataset.i) / (levels.length - 1));
   });
 
   let ticking = false;
@@ -1113,7 +1341,84 @@ a.c-v:hover{background-size:100% 1.5px}
       toast('Selected. Press Ctrl+C or Cmd+C to copy.');
     }
   }));
-  $('#toTop').addEventListener('click', () => scrollTo({ top: 0, behavior: RM.matches ? 'auto' : 'smooth' }));
+  $('#toTop').addEventListener('click', () => goTo(0));
+
+  /* ---------- smooth scrolling (desktop pointer only) ---------- */
+  let lenis = null;
+  function goTo(target) {
+    const off = -(64 + (parseFloat(getComputedStyle(d).paddingTop) || 0));
+    if (lenis) { lenis.scrollTo(target, { offset: typeof target === 'number' ? 0 : off, duration: 1.4, easing: (t) => 1 - Math.pow(1 - t, 4) }); return; }
+    if (typeof target === 'number') scrollTo({ top: target, behavior: RM.matches ? 'auto' : 'smooth' });
+    else target.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth' });
+  }
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || !lenis) return;
+    const id = a.getAttribute('href').slice(1);
+    const el = id === 'top' ? 0 : document.getElementById(id);
+    if (el === null) return;
+    e.preventDefault(); goTo(el);
+    try { history.replaceState(null, '', '#' + id); } catch (err) {}
+  });
+  function initLenis() {
+    if (lenis || !window.Lenis || !FINE || RM.matches) return;
+    lenis = new window.Lenis({ lerp: .1, smoothWheel: true, wheelMultiplier: .95 });
+    if (window.gsap) {
+      if (window.ScrollTrigger) lenis.on('scroll', window.ScrollTrigger.update);
+      window.gsap.ticker.add((t) => lenis.raf(t * 1000));
+      window.gsap.ticker.lagSmoothing(0);
+    } else { const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); }
+  }
+
+  /* ---------- scroll-linked motion (GSAP ScrollTrigger) ---------- */
+  let fxOn = false;
+  function initScrollFX() {
+    const g = window.gsap, ST = window.ScrollTrigger;
+    if (fxOn || !g || !ST || !animated) return; fxOn = true;
+    g.registerPlugin(ST);
+    // portrait drifts slower than the page: a sense of depth
+    g.to('.hero-portrait', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: .6 } });
+    // education line fills as you read down it
+    const edu = $('.edu');
+    if (edu) { edu.style.setProperty('--edu-p', '0'); ST.create({ trigger: edu, start: 'top 78%', end: 'bottom 60%', scrub: .5, onUpdate: (s) => edu.style.setProperty('--edu-p', s.progress.toFixed(3)) }); }
+    // contact ripples rise into view
+    g.fromTo('.ripples', { yPercent: 25 }, { yPercent: -10, ease: 'none', scrollTrigger: { trigger: '.contact', start: 'top bottom', end: 'bottom top', scrub: .6 } });
+    // marquee speeds up with scroll velocity, then eases back
+    const track = $('.mq-track'), mqEl = $('.marquee');
+    if (track) {
+      track.style.animation = 'none';
+      const mq = g.to(track, { xPercent: -50, duration: 42, ease: 'none', repeat: -1 });
+      let boost = 0, hover = false;
+      ST.create({ trigger: mqEl, start: 'top bottom', end: 'bottom top', onUpdate: (s) => { boost = Math.min(5, Math.abs(s.getVelocity()) / 500); }, onToggle: (s) => (s.isActive ? mq.resume() : mq.pause()) });
+      mqEl.addEventListener('mouseenter', () => (hover = true)); mqEl.addEventListener('mouseleave', () => (hover = false));
+      g.ticker.add(() => { const want = hover ? .15 : 1 + boost; mq.timeScale(mq.timeScale() + (want - mq.timeScale()) * .08); boost *= .9; });
+    }
+    if (document.fonts) document.fonts.ready.then(() => ST.refresh());
+  }
+
+  /* ---------- cursor ring (mouse only) ---------- */
+  function initCursor() {
+    if (!FINE || RM.matches || !animated || $('.cursor')) return;
+    const ring = document.createElement('div'); ring.className = 'cursor'; ring.setAttribute('aria-hidden', 'true'); document.body.appendChild(ring);
+    const HOT = 'a,button,[role="tab"],input,label,.dept,.chips li,.mod,.vb,.kn-handle';
+    let mx = 0, my = 0, x = 0, y = 0, s = 1, ts = 1, raf = 0, shown = false;
+    const tick = () => {
+      x += (mx - x) * .22; y += (my - y) * .22; s += (ts - s) * .2;
+      ring.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%) scale(${s.toFixed(3)})`;
+      raf = Math.abs(mx - x) + Math.abs(my - y) + Math.abs(ts - s) > .15 ? requestAnimationFrame(tick) : 0;
+    };
+    addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      mx = e.clientX; my = e.clientY;
+      if (!shown) { shown = true; x = mx; y = my; ring.classList.add('on'); }
+      const hot = e.target.closest && e.target.closest(HOT);
+      ts = hot ? 1.8 : 1; ring.classList.toggle('hot', !!hot);
+      if (!raf) raf = requestAnimationFrame(tick);
+    }, { passive: true });
+    document.documentElement.addEventListener('mouseleave', () => { ring.classList.remove('on'); shown = false; });
+  }
+
+  function startMotion() { initScrollFX(); initCursor(); (window.__tbLenis || Promise.resolve(false)).then(initLenis); }
 
   /* ---------- electrotherapy waveforms ---------- */
   const waveFns = {
@@ -1136,8 +1441,8 @@ a.c-v:hover{background-size:100% 1.5px}
   });
 
   /* ---------- shared canvas helpers ---------- */
-  function fitCanvas(cv, ctx) {
-    const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  function fitCanvas(cv, ctx, cap = 2) {
+    const r = cv.getBoundingClientRect(), dpr = Math.min(cap, devicePixelRatio || 1);
     cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return [r.width, r.height];
@@ -1160,8 +1465,8 @@ a.c-v:hover{background-size:100% 1.5px}
     let W = 0, H = 0, nodes = [], sig = [], raf = 0, last = 0, spawn = 0;
     const LINK = 130, mouse = { x: -1e4, y: -1e4, on: false };
     function build() {
-      [W, H] = fitCanvas(cv, ctx);
-      const n = Math.round(Math.max(26, Math.min(84, W * H / 12500)));
+      [W, H] = fitCanvas(cv, ctx, 1.5);
+      const n = Math.round(Math.max(24, Math.min(76, W * H / 13500)));
       nodes = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .2, vy: (Math.random() - .5) * .2, r: 1.3 + Math.random() * 1.8, g: 0, ref: 0 }));
       sig = [];
     }
@@ -1194,14 +1499,17 @@ a.c-v:hover{background-size:100% 1.5px}
     }
     function draw() {
       ctx.clearRect(0, 0, W, H);
+      // edges batched into 5 opacity bands: 5 stroke calls instead of hundreds
       ctx.lineWidth = 1; ctx.strokeStyle = C.accent;
+      const bands = [new Path2D(), new Path2D(), new Path2D(), new Path2D(), new Path2D()], L2 = LINK * LINK;
       for (let i = 0; i < nodes.length; i++) {
         const a = nodes[i];
         for (let j = i + 1; j < nodes.length; j++) {
-          const b = nodes[j], d2 = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-          if (d2 < LINK * LINK) { ctx.globalAlpha = (1 - Math.sqrt(d2) / LINK) * .28; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+          const b = nodes[j], dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
+          if (d2 < L2) { const p = bands[Math.min(4, ((1 - Math.sqrt(d2) / LINK) * 5) | 0)]; p.moveTo(a.x, a.y); p.lineTo(b.x, b.y); }
         }
       }
+      for (let k = 0; k < 5; k++) { ctx.globalAlpha = (k + .5) / 5 * .28; ctx.stroke(bands[k]); }
       ctx.strokeStyle = C.signal; ctx.fillStyle = C.signal; ctx.lineWidth = 2;
       for (const s of sig) {
         const hx = s.a.x + (s.b.x - s.a.x) * s.t, hy = s.a.y + (s.b.y - s.a.y) * s.t;
@@ -1253,15 +1561,25 @@ a.c-v:hover{background-size:100% 1.5px}
       ys = new Float32Array(Math.ceil(W) + 1).fill(-70);
       peaks = starts.map((st) => st + 32);
       for (const st of starts) for (let t = 0; t < 130; t++) { const x = Math.round(st + t); if (x >= 0 && x < ys.length) ys[x] = mv(t); }
+      paintBase();
+    }
+    // the static trace is painted once into an offscreen canvas and blitted each frame
+    const baseCv = document.createElement('canvas'), bctx = baseCv.getContext('2d');
+    function paintBase() {
+      baseCv.width = cv.width; baseCv.height = cv.height;
+      bctx.setTransform(cv.width / Math.max(1, W), 0, 0, cv.height / Math.max(1, H), 0, 0);
+      bctx.clearRect(0, 0, W, H);
+      bctx.save(); bctx.setLineDash([3, 6]); bctx.strokeStyle = C.line; bctx.globalAlpha = .7; bctx.lineWidth = 1;
+      bctx.beginPath(); bctx.moveTo(0, yOf(-55)); bctx.lineTo(W, yOf(-55)); bctx.stroke(); bctx.restore();
+      bctx.strokeStyle = C.line; bctx.lineWidth = 1.6; bctx.globalAlpha = 1; bctx.lineJoin = 'round';
+      bctx.beginPath();
+      for (let x = 0; x < ys.length; x++) { const y = yOf(ys[x]); x ? bctx.lineTo(x, y) : bctx.moveTo(x, y); }
+      bctx.stroke();
     }
     function drawBase() {
       ctx.clearRect(0, 0, W, H);
-      ctx.save(); ctx.setLineDash([3, 6]); ctx.strokeStyle = C.line; ctx.globalAlpha = .7; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(0, yOf(-55)); ctx.lineTo(W, yOf(-55)); ctx.stroke(); ctx.restore();
-      ctx.strokeStyle = C.line; ctx.lineWidth = 1.6; ctx.globalAlpha = 1; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      for (let x = 0; x < ys.length; x++) { const y = yOf(ys[x]); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.drawImage(baseCv, 0, 0, W, H);
     }
     function drawPulse() {
       const tail = 240;
@@ -1294,9 +1612,292 @@ a.c-v:hover{background-size:100% 1.5px}
     const stop = () => { cancelAnimationFrame(raf); raf = 0; };
     build(); drawBase();
     if (RM.matches) { head = W * .6; drawPulse(); }
-    redrawers.push(() => { if (!raf) { drawBase(); if (RM.matches) drawPulse(); } });
+    redrawers.push(() => { paintBase(); if (!raf) { drawBase(); if (RM.matches) drawPulse(); } });
     new ResizeObserver(() => { build(); drawBase(); }).observe(cv);
     runWhenVisible(cv, start, stop);
+  })();
+
+  /* =========================================================
+     MY ACADEMIC WORLD
+     ========================================================= */
+  (function academics() {
+    const tabs = $$('.aw-tab'), panels = $$('.aw-panel'), ind = $('.aw-ind'), bar = $('.aw-tabs');
+    if (!tabs.length) return;
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const el = (tag, attrs, parent) => { const n = document.createElementNS(SVGNS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    let cur = 0;
+    const onShow = {};
+
+    /* ---- tabs ---- */
+    function moveInd() { const t = tabs[cur]; ind.style.width = t.offsetWidth + 'px'; ind.style.transform = `translateX(${t.offsetLeft}px)`; }
+    function select(i, focus) {
+      if (i === cur) { if (focus) tabs[i].focus(); return; }
+      const old = panels[cur], nw = panels[i], dir = i > cur ? 1 : -1;
+      tabs[cur].setAttribute('aria-selected', 'false'); tabs[cur].tabIndex = -1;
+      tabs[i].setAttribute('aria-selected', 'true'); tabs[i].tabIndex = 0; if (focus) tabs[i].focus();
+      cur = i; moveInd();
+      const show = () => {
+        old.hidden = true; nw.hidden = false;
+        (onShow[nw.id] || (() => {}))();
+        if (!RM.matches && nw.animate) nw.animate([{ opacity: 0, transform: `translateX(${dir * 26}px)` }, { opacity: 1, transform: 'none' }], { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)' });
+        if (window.ScrollTrigger && fxOn) window.ScrollTrigger.refresh();
+      };
+      if (!RM.matches && old.animate) old.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-dir * 18}px)` }], { duration: 180, easing: 'cubic-bezier(.5,0,.75,0)' }).onfinish = show;
+      else show();
+    }
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('keydown', (e) => {
+        const k = e.key; let n = null;
+        if (k === 'ArrowRight') n = (cur + 1) % tabs.length; else if (k === 'ArrowLeft') n = (cur - 1 + tabs.length) % tabs.length;
+        else if (k === 'Home') n = 0; else if (k === 'End') n = tabs.length - 1;
+        if (n !== null) { e.preventDefault(); select(n, true); }
+      });
+    });
+    new ResizeObserver(moveInd).observe(bar);
+    if (document.fonts) document.fonts.ready.then(moveInd);
+    moveInd();
+
+    /* ---- 1. nerve signal: all-or-none ---- */
+    (function nerve() {
+      const svg = $('#npSvg'), grid = $('#npGrid'), trace = $('#npTrace'), ghost = $('#npGhost'), dot = $('#npDot');
+      const stim = $('#npStim'), out = $('#npOut'), read = $('#npRead'), btn = $('#npFire');
+      const X0 = 60, X1 = 540, Y0 = 18, Y1 = 262, T = 8;
+      const nx = (t) => X0 + t / T * (X1 - X0), ny = (v) => Y0 + (40 - v) / 130 * (Y1 - Y0);
+      // grid + labels
+      for (let t = 0; t <= T; t++) { el('line', { class: 'np-grid-l', x1: nx(t), x2: nx(t), y1: Y0, y2: Y1 }, grid); el('text', { class: 'svg-lab', x: nx(t), y: Y1 + 18, 'text-anchor': 'middle' }, grid).textContent = t; }
+      [[30, '+30'], [0, '0'], [-55, '−55'], [-70, '−70']].forEach(([v, lab]) => {
+        el('line', { class: v === -55 ? 'np-thr' : (v === -70 ? 'np-axis' : 'np-grid-l'), x1: X0, x2: X1, y1: ny(v), y2: ny(v) }, grid);
+        el('text', { class: 'svg-lab' + (v === -55 ? ' hot' : ''), x: X0 - 8, y: ny(v) + 4, 'text-anchor': 'end' }, grid).textContent = lab;
+      });
+      el('text', { class: 'svg-lab', x: X0 - 8, y: Y0 - 4, 'text-anchor': 'end' }, grid).textContent = 'mV';
+      el('text', { class: 'svg-lab hot', x: X1, y: ny(-55) - 7, 'text-anchor': 'end' }, grid).textContent = 'threshold';
+      el('text', { class: 'svg-lab', x: X1, y: Y1 + 34, 'text-anchor': 'end' }, grid).textContent = 'time (ms)';
+      el('line', { class: 'np-stim', x1: nx(1), x2: nx(1), y1: Y1, y2: Y1 - 16 }, grid);
+      el('text', { class: 'svg-lab', x: nx(1) + 6, y: Y1 - 6 }, grid).textContent = 'stimulus';
+      const V = (t, s) => {
+        if (t < 1) return -70;
+        const u = t - 1;
+        if (s < .5) { const k = u / .5; return -70 + s * 30 * k * Math.exp(1 - k); }   // graded, decays
+        const uth = .5 - .25 * (s - .5) / .5;                                         // stronger reaches threshold sooner
+        if (u < uth) { const k = u / uth; return -70 + 15 * k * k; }
+        const w = u - uth;
+        if (w < .45) { const k = w / .45; return -55 + 85 * k * k * (3 - 2 * k); }
+        if (w < 1.15) { const k = (w - .45) / .7; return 30 - 110 * k * k * (3 - 2 * k); }
+        return -80 + 10 * (1 - Math.exp(-(w - 1.15) / 1.2));
+      };
+      const pathFor = (s, tEnd) => { let p = ''; for (let t = 0; t <= tEnd + 1e-9; t += .02) p += (p ? ' L' : 'M') + nx(t).toFixed(1) + ' ' + ny(V(t, s)).toFixed(1); return p; };
+      const report = (s) => {
+        const fires = s >= .5;
+        read.textContent = fires ? 'Peak +30 mV · threshold reached, action potential fired' : `Peak ${Math.round(-70 + 30 * s)} mV · below threshold, no action potential`;
+        read.classList.toggle('hot', fires); trace.classList.toggle('hot', fires);
+      };
+      let raf = 0;
+      const staticDraw = () => {
+        cancelAnimationFrame(raf);
+        const s = stim.value / 100; out.textContent = stim.value + '%';
+        trace.setAttribute('d', pathFor(s, T)); dot.setAttribute('cx', nx(T)); dot.setAttribute('cy', ny(V(T, s))); report(s);
+      };
+      const play = () => {
+        const s = stim.value / 100;
+        ghost.setAttribute('d', trace.getAttribute('d') || '');
+        if (RM.matches) { staticDraw(); return; }
+        cancelAnimationFrame(raf);
+        svg.classList.add('stim'); setTimeout(() => svg.classList.remove('stim'), 700);
+        read.textContent = 'Recording…'; read.classList.remove('hot'); trace.classList.toggle('hot', s >= .5);
+        const t0 = performance.now(), dur = 1500;
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / dur), te = T * k;
+          trace.setAttribute('d', pathFor(s, Math.max(.02, te))); dot.setAttribute('cx', nx(te)); dot.setAttribute('cy', ny(V(te, s)));
+          if (k < 1) raf = requestAnimationFrame(step); else report(s);
+        };
+        raf = requestAnimationFrame(step);
+      };
+      stim.addEventListener('input', staticDraw);
+      btn.addEventListener('click', play);
+      staticDraw();
+    })();
+
+    /* ---- 2. gait cycle ---- */
+    (function gait() {
+      const cv = $('#gaitCv'), ctx = cv.getContext('2d'), phasesEl = $('#gaitPhases'), head = $('.gait-head', phasesEl);
+      const playBtn = $('#gaitPlay'), scrub = $('#gaitScrub'), read = $('#gaitRead');
+      const out = { hip: $('#gHip'), knee: $('#gKnee'), ankle: $('#gAnkle') };
+      // typical sagittal-plane angles (degrees) for healthy walking, % of cycle
+      const KEYS = {
+        hip: [[0, 30], [12, 25], [31, 5], [50, -10], [62, 0], [75, 20], [87, 32]],
+        knee: [[0, 5], [12, 18], [31, 5], [50, 8], [62, 38], [73, 60], [87, 25]],
+        ankle: [[0, 0], [7, -7], [31, 5], [48, 10], [62, -18], [75, -2], [87, 0]]
+      };
+      const PH = [[0, 2, 'Initial contact'], [2, 12, 'Loading response', 'LR'], [12, 31, 'Mid stance', 'MSt'], [31, 50, 'Terminal stance', 'TSt'], [50, 62, 'Pre-swing', 'PSw'], [62, 75, 'Initial swing', 'ISw'], [75, 87, 'Mid swing', 'MSw'], [87, 100, 'Terminal swing', 'TSw']];
+      const spline = (keys, p) => {
+        p = ((p % 100) + 100) % 100; const n = keys.length;
+        let i = n - 1; for (let k = 0; k < n; k++) if (keys[k][0] > p) { i = k - 1; break; }
+        const at = (j) => { const w = Math.floor(j / n), jj = ((j % n) + n) % n; return [keys[jj][0] + w * 100, keys[jj][1]]; };
+        const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2), t = (p - p1[0]) / (p2[0] - p1[0]), t2 = t * t, t3 = t2 * t;
+        return .5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+      };
+      // phase buttons (initial contact is folded into loading response for tapping)
+      const btns = PH.slice(1).map(([a, b, name, abbr], i) => {
+        const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = abbr; bt.title = name;
+        bt.setAttribute('aria-label', `${name}, ${i === 0 ? 0 : a} to ${b}% of the cycle`);
+        bt.style.setProperty('--w', i === 0 ? b : b - a); if (a >= 62) bt.classList.add('sw');
+        bt.addEventListener('click', () => { setPlaying(false); setP(i === 0 ? 0 : a + .01); });
+        phasesEl.appendChild(bt); return bt;
+      });
+      let W = 0, H = 0, p = 0, playing = !RM.matches, raf = 0, last = 0, ground = 0, speed = 0, vis = false, active = false;
+      const CYCLE = 1.1, D = Math.PI / 180;
+      function leg(q, hx, hy, S) {
+        const th = spline(KEYS.hip, q) * D, kn = spline(KEYS.knee, q) * D, an = spline(KEYS.ankle, q) * D;
+        const Lt = .25 * S, Ls = .25 * S, Lf = .1 * S;
+        const kx = hx + Lt * Math.sin(th), ky = hy + Lt * Math.cos(th), ts = th - kn;
+        const ax = kx + Ls * Math.sin(ts), ay = ky + Ls * Math.cos(ts);
+        const fa = -ts - an, fx = Math.cos(fa), fy = Math.sin(fa);
+        const hlx = ax + .035 * S * Math.sin(ts) - .22 * Lf * fx, hly = ay + .035 * S * Math.cos(ts) - .22 * Lf * fy;
+        return { k: [kx, ky], a: [ax, ay], heel: [hlx, hly], toe: [hlx + Lf * fx, hly + Lf * fy] };
+      }
+      const S = () => H * .92;
+      function size() {
+        [W, H] = fitCanvas(cv, ctx);
+        pw = phasesEl.clientWidth;
+        const s = S(), a = leg(5, 0, 0, s), b = leg(55, 0, 0, s);
+        speed = Math.abs(a.heel[0] - b.heel[0]) / (.5 * CYCLE);   // treadmill matches foot travel in stance
+        draw();
+      }
+      const fmt = (v, pos, neg) => { const r = Math.round(v); return r === 0 ? 'Neutral' : `${Math.abs(r)}° ${r > 0 ? pos : neg}`; };
+      // text is only written when it changes, and nothing is measured per frame
+      const shown = { label: '', hip: '', knee: '', ankle: '', idx: -1 };
+      let pw = 0;
+      const put = (k, node, v) => { if (shown[k] !== v) { shown[k] = v; node.textContent = v; } };
+      function updateText() {
+        const pi = PH.findIndex(([a, b]) => p >= a && p < b), ph = PH[Math.max(0, pi)];
+        const label = `${ph[2]} · ${Math.round(p)}% of the cycle`;
+        if (label !== shown.label) { shown.label = label; read.textContent = label; read.classList.toggle('hot', p >= 62); }
+        put('hip', out.hip, fmt(spline(KEYS.hip, p), 'flexion', 'extension'));
+        put('knee', out.knee, fmt(spline(KEYS.knee, p), 'flexion', 'extension'));
+        put('ankle', out.ankle, fmt(spline(KEYS.ankle, p), 'dorsiflexion', 'plantarflexion'));
+        const idx = Math.max(0, pi - 1);
+        if (idx !== shown.idx) { shown.idx = idx; btns.forEach((b, i) => b.classList.toggle('on', i === idx)); }
+        head.style.setProperty('--gx', (p / 100 * pw).toFixed(1) + 'px');
+        if (!dragScrub) scrub.value = p.toFixed(1);
+      }
+      let dragScrub = false;
+      scrub.addEventListener('pointerdown', () => (dragScrub = true));
+      addEventListener('pointerup', () => (dragScrub = false));
+      function limb(a, b, c, w, col, alpha) {
+        ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); if (c) ctx.lineTo(c[0], c[1]); ctx.stroke();
+      }
+      function draw() {
+        if (!W) return;
+        const s = S(), cx = W * .5, gy = H * .94;
+        ctx.clearRect(0, 0, W, H);
+        let R = leg(p, 0, 0, s), Lg = leg(p + 50, 0, 0, s);
+        const low = Math.max(R.heel[1], R.toe[1], Lg.heel[1], Lg.toe[1]);
+        const hy = gy - low - 1, off = (pt) => [pt[0] + cx, pt[1] + hy];
+        R = { k: off(R.k), a: off(R.a), heel: off(R.heel), toe: off(R.toe) };
+        Lg = { k: off(Lg.k), a: off(Lg.a), heel: off(Lg.heel), toe: off(Lg.toe) };
+        const hip = [cx, hy];
+        // treadmill
+        ctx.globalAlpha = 1; ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        ctx.lineWidth = 2; ctx.beginPath();
+        const gap = 34; for (let x = -((ground % gap) + gap); x < W; x += gap) { ctx.moveTo(x, gy + 7); ctx.lineTo(x + 12, gy + 7); }
+        ctx.stroke();
+        // body: trunk, head, arms (arms swing opposite to the same-side leg)
+        const sh = [cx + .02 * s, hy - .3 * s], neck = [sh[0] + .01 * s, sh[1] - .035 * s];
+        const arm = (q) => { const a = -(spline(KEYS.hip, q) - 10) * 1.05 * D, e = a + (18 + .35 * Math.max(0, -(spline(KEYS.hip, q) - 10))) * D; const el = [sh[0] + .15 * s * Math.sin(a), sh[1] + .15 * s * Math.cos(a)]; return [sh, el, [el[0] + .14 * s * Math.sin(e), el[1] + .14 * s * Math.cos(e)]]; };
+        const aL = arm(p + 50), aR = arm(p);
+        limb(aL[0], aL[1], aL[2], 7, C.ink, .35);                       // far (left) side first
+        limb(Lg.k, Lg.a, null, 9, C.ink, .35); limb(hip, Lg.k, null, 10, C.ink, .35); limb(Lg.heel, Lg.toe, null, 7, C.ink, .35);
+        limb(hip, sh, null, 11, C.inkMain, .9);
+        ctx.globalAlpha = 1; ctx.fillStyle = C.surface; ctx.strokeStyle = C.inkMain; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(neck[0] + .01 * s, neck[1] - .055 * s, .055 * s, 0, 6.283); ctx.fill(); ctx.stroke();
+        limb(hip, R.k, R.a, 11, C.accent, 1); limb(R.heel, R.toe, null, 8, C.accent, 1);
+        limb(aR[0], aR[1], aR[2], 6.5, C.inkMain, 1);                   // near (right) arm on top
+        // joint markers on the near leg
+        ctx.globalAlpha = 1; ctx.fillStyle = C.surface; ctx.strokeStyle = C.signal; ctx.lineWidth = 2.5;
+        [hip, R.k, R.a].forEach((j) => { ctx.beginPath(); ctx.arc(j[0], j[1], 5, 0, 6.283); ctx.fill(); ctx.stroke(); });
+        ctx.globalAlpha = 1;
+      }
+      function setP(v) { p = ((v % 100) + 100) % 100; draw(); updateText(); }
+      function loop(t) {
+        const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
+        setP(p + dt / CYCLE * 100); ground += speed * dt;
+        raf = requestAnimationFrame(loop);
+      }
+      function sync() { const go = playing && vis && active && !document.hidden && !RM.matches; if (go && !raf) { last = 0; raf = requestAnimationFrame(loop); } else if (!go && raf) { cancelAnimationFrame(raf); raf = 0; } }
+      function setPlaying(v) { playing = v; playBtn.textContent = v ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(v)); sync(); }
+      playBtn.addEventListener('click', () => setPlaying(!playing));
+      scrub.addEventListener('input', () => { setPlaying(false); setP(+scrub.value); });
+      new IntersectionObserver(([e]) => { vis = e.isIntersecting; sync(); }).observe(cv);
+      document.addEventListener('visibilitychange', sync);
+      new ResizeObserver(() => { if (!$('#panel-gait').hidden) { size(); updateText(); } }).observe(cv);
+      redrawers.push(draw);
+      if (RM.matches) setPlaying(false);
+      onShow['panel-gait'] = () => { active = true; size(); updateText(); sync(); };
+      onShow['panel-nerve'] = onShow['panel-knee'] = () => { active = false; sync(); };
+    })();
+
+    /* ---- 3. hamstring length: active knee extension ---- */
+    (function knee() {
+      const svg = $('#knSvg'), arc = $('#knArc'), deg = $('#knDeg'), shank = $('#knShank'), foot = $('#knFoot'), handle = $('#knHandle');
+      const ham = $('#knHam'), band = $('#knHamBand'), rng = $('#knRange'), read = $('#knRead'), bFlex = $('#knFlex'), bTight = $('#knTight');
+      const K = [250, 140], LS = 112, LF = 34, R = 50;
+      let limit = 8, delta = 90, demoRaf = 0, demoDone = false;
+      const set = (dg, fromInput) => {
+        delta = Math.max(limit, Math.min(90, dg));
+        const r = delta * D, d = [-Math.sin(r), -Math.cos(r)], n = [-Math.cos(r), Math.sin(r)], an = [-n[0], -n[1]];
+        const A = [K[0] + LS * d[0], K[1] + LS * d[1]];
+        shank.setAttribute('x1', K[0]); shank.setAttribute('y1', K[1]); shank.setAttribute('x2', A[0].toFixed(1)); shank.setAttribute('y2', A[1].toFixed(1));
+        const f0 = [A[0] + 6 * d[0] - 8 * an[0], A[1] + 6 * d[1] - 8 * an[1]], f1 = [f0[0] + LF * an[0], f0[1] + LF * an[1]];
+        foot.setAttribute('x1', f0[0].toFixed(1)); foot.setAttribute('y1', f0[1].toFixed(1)); foot.setAttribute('x2', f1[0].toFixed(1)); foot.setAttribute('y2', f1[1].toFixed(1));
+        handle.setAttribute('cx', A[0].toFixed(1)); handle.setAttribute('cy', A[1].toFixed(1));
+        // knee angle measured from full extension
+        const s0 = [K[0], K[1] - R], s1 = [K[0] + R * d[0], K[1] + R * d[1]];
+        arc.setAttribute('d', delta < .5 ? '' : `M${K[0]} ${K[1]} L${s0[0]} ${s0[1]} A${R} ${R} 0 0 0 ${s1[0].toFixed(1)} ${s1[1].toFixed(1)} Z`);
+        const mid = r / 2, lp = [K[0] - (R + 22) * Math.sin(mid), K[1] - (R + 22) * Math.cos(mid)];
+        deg.setAttribute('x', lp[0].toFixed(1)); deg.setAttribute('y', (lp[1] + 4).toFixed(1)); deg.setAttribute('text-anchor', 'middle');
+        deg.textContent = Math.round(delta) + '°';
+        // hamstrings: ischial tuberosity → back of thigh → just below the knee
+        const ins = [K[0] + 24 * d[0] + 10 * n[0], K[1] + 24 * d[1] + 10 * n[1]];
+        const path = `M240 278 C233 236 233 186 237 156 Q 238 ${K[1] - 2} ${ins[0].toFixed(1)} ${ins[1].toFixed(1)}`;
+        ham.setAttribute('d', path); band.setAttribute('d', path);
+        const k = (90 - delta) / (90 - limit);
+        const col = `color-mix(in oklch, var(--signal) ${Math.round(k * 100)}%, var(--accent))`;
+        ham.style.stroke = col; band.style.stroke = col;
+        const atStop = delta <= limit + .5;
+        read.textContent = delta >= 89.5 ? 'Knee bent to 90°' : atStop ? `Stopped ${limit}° short of straight · hamstrings at full stretch` : `Knee ${Math.round(delta)}° short of straight`;
+        read.classList.toggle('hot', atStop);
+        if (!fromInput) rng.value = Math.round((90 - delta) / (90 - limit) * 100);
+      };
+      const D = Math.PI / 180;
+      rng.addEventListener('input', () => { stopDemo(); set(90 - (rng.value / 100) * (90 - limit), true); });
+      const mode = (tight) => {
+        limit = tight ? 38 : 8; bTight.setAttribute('aria-pressed', String(tight)); bFlex.setAttribute('aria-pressed', String(!tight));
+        stopDemo(); tweenTo(limit, 900);
+      };
+      bFlex.addEventListener('click', () => mode(false)); bTight.addEventListener('click', () => mode(true));
+      // drag the foot
+      const pt = svg.createSVGPoint();
+      const angleAt = (e) => { pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svg.getScreenCTM().inverse()); return Math.atan2(-(q.x - K[0]), -(q.y - K[1])) / D; };
+      let dragging = false;
+      svg.addEventListener('pointerdown', (e) => { if (e.target !== handle && e.target !== shank && e.target !== foot) return; dragging = true; stopDemo(); svg.classList.add('drag'); svg.setPointerCapture(e.pointerId); set(angleAt(e)); });
+      svg.addEventListener('pointermove', (e) => { if (dragging) set(angleAt(e)); });
+      const end = () => { dragging = false; svg.classList.remove('drag'); };
+      svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+      function stopDemo() { cancelAnimationFrame(demoRaf); demoRaf = 0; }
+      function tweenTo(target, dur, then) {
+        if (RM.matches) { set(target); if (then) then(); return; }
+        const from = delta, t0 = performance.now();
+        const step = (now) => { const k = Math.min(1, (now - t0) / dur); set(from + (target - from) * (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)); if (k < 1) demoRaf = requestAnimationFrame(step); else { demoRaf = 0; if (then) then(); } };
+        demoRaf = requestAnimationFrame(step);
+      }
+      set(90);
+      const prevShow = onShow['panel-knee'];
+      onShow['panel-knee'] = () => { prevShow && prevShow(); if (!demoDone) { demoDone = true; setTimeout(() => tweenTo(limit, 1400, () => setTimeout(() => tweenTo(60, 900), 500)), 350); } };
+    })();
   })();
 
   /* =========================================================
@@ -1455,6 +2056,7 @@ a.c-v:hover{background-size:100% 1.5px}
       L.remove();
       d.classList.remove('has-loader');
       startReveals();
+      startMotion();
       if (hashTarget) hashTarget.scrollIntoView();
     }
 
